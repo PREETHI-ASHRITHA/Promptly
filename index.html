@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Promptly</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+        }
+        .container {
+            min-height: 100vh;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex items-center justify-center container">
+    <div class="flex flex-col items-center justify-center p-6 bg-white rounded-3xl shadow-xl w-11/12 max-w-sm text-center">
+        <!-- App Title -->
+        <h1 class="text-3xl font-bold text-gray-800 mb-4">Promptly</h1>
+        <p class="text-gray-500 mb-8 max-w-xs">Your micro-reminder, instantly.</p>
+
+        <!-- Main Button -->
+        <button id="remind-button" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-6 px-8 rounded-full shadow-lg transition duration-300 ease-in-out transform hover:scale-105 active:scale-95 text-xl">
+            Tap and Speak Your Reminder
+        </button>
+
+        <!-- Status Message -->
+        <p id="status-message" class="mt-8 text-gray-700 font-semibold"></p>
+    </div>
+
+    <script>
+        const remindButton = document.getElementById('remind-button');
+        const statusMessage = document.getElementById('status-message');
+
+        // Check for Web Speech API and Notifications API support
+        if (!('webkitSpeechRecognition' in window) || !('Notification' in window)) {
+            statusMessage.textContent = 'Sorry, your browser does not support the required features.';
+            remindButton.disabled = true;
+        }
+
+        let recognition = null;
+        let isListening = false;
+
+        remindButton.addEventListener('click', () => {
+            if (!isListening) {
+                startListening();
+            } else {
+                stopListening();
+            }
+        });
+
+        // Function to request and handle notification permissions
+        async function requestNotificationPermission() {
+            if (Notification.permission === 'granted') {
+                return true;
+            } else if (Notification.permission !== 'denied') {
+                const permission = await Notification.requestPermission();
+                return permission === 'granted';
+            }
+            return false;
+        }
+
+        // Function to start the speech recognition
+        function startListening() {
+            statusMessage.textContent = 'Listening... Speak your reminder now.';
+            remindButton.textContent = 'Stop Listening';
+            remindButton.classList.remove('bg-indigo-600', 'hover:bg-indigo-700');
+            remindButton.classList.add('bg-red-500', 'hover:bg-red-600');
+            isListening = true;
+
+            recognition = new webkitSpeechRecognition();
+            recognition.continuous = false;
+            recognition.interimResults = false;
+            recognition.lang = 'en-US';
+
+            recognition.onresult = (event) => {
+                const transcript = event.results[0][0].transcript;
+                statusMessage.textContent = `Reminder set: "${transcript}"`;
+                console.log(`Reminder captured: "${transcript}"`);
+                
+                // Set the 3-minute timer
+                const threeMinutesInMs = 3 * 60 * 1000;
+                setTimeout(async () => {
+                    const permissionGranted = await requestNotificationPermission();
+                    if (permissionGranted) {
+                        const notification = new Notification('Promptly Reminder', {
+                            body: transcript,
+                            icon: 'https://placehold.co/100x100/A5B4FC/4338CA?text=P'
+                        });
+                        console.log('Notification displayed.');
+                    } else {
+                        statusMessage.textContent = `Reminder: "${transcript}"`;
+                        console.log('Notification permission denied. Displaying reminder in-app.');
+                    }
+                }, threeMinutesInMs);
+                
+                resetUI();
+            };
+
+            recognition.onerror = (event) => {
+                console.error('Speech recognition error:', event.error);
+                statusMessage.textContent = 'Error with voice input. Please try again.';
+                resetUI();
+            };
+            
+            recognition.onend = () => {
+                // If the user stops listening manually, don't reset.
+                if (isListening) {
+                    resetUI();
+                }
+            };
+
+            recognition.start();
+        }
+        
+        // Function to stop the speech recognition manually
+        function stopListening() {
+            if (recognition) {
+                recognition.stop();
+            }
+            resetUI();
+        }
+
+        // Function to reset the UI to its initial state
+        function resetUI() {
+            statusMessage.textContent = '';
+            remindButton.textContent = 'Tap and Speak Your Reminder';
+            remindButton.classList.remove('bg-red-500', 'hover:bg-red-600');
+            remindButton.classList.add('bg-indigo-600', 'hover:bg-indigo-700');
+            isListening = false;
+        }
+
+    </script>
+</body>
+</html>
