@@ -1,0 +1,33 @@
+<template>
+    <lightning-card title="Promptly" icon-name="utility:bell">
+        <div class="slds-m-around_medium slds-text-align_center">
+            <p class="slds-text-heading_small slds-m-bottom_small">Your micro-reminder, instantly.</p>
+
+            <div class="slds-grid slds-wrap slds-grid_align-center">
+
+                <!-- <div class="slds-col slds-size_1-of-2 slds-medium-size_1-of-4">
+                    <lightning-input
+                        label="Time (mins)"
+                        type="number"
+                        value={timeInMinutes}
+                        onchange={handleTimeChange}>
+                    </lightning-input>
+                </div> -->
+
+                <div class="slds-col slds-size_1-of-2 slds-medium-size_1-of-4">
+                    <lightning-input
+                        label="User Email"
+                        type="email"
+                        value={userEmail}
+                        onchange={handleEmailChange}
+                        class="slds-m-left_small">
+                    </lightning-input>
+                </div>
+            </div>
+
+            <lightning-button variant="brand" label="Tap and Speak Your Reminder" onclick={startListening} class="slds-p-around_medium slds-m-bottom_small"></lightning-button>
+
+            <p if:true={statusMessage} class="slds-m-top_medium slds-text-heading_small">{statusMessage}</p>
+        </div>
+    </lightning-card>
+</template>
